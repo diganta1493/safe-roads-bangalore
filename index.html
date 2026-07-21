@@ -7,8 +7,6 @@
   <link rel="stylesheet" href="style.css" />
   <!-- MarkerClusterer for pin grouping -->
   <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
-  <!-- OpenAI config -->
-  <script src="openai-config.js"></script>
   <!-- Firebase SDK (modular compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -312,14 +310,9 @@
           <span class="field-error" id="severity-error"></span>
         </div>
         <div class="form-group">
-          <div class="description-label-row">
-            <label for="description">Description <span class="required">*</span></label>
-            <button type="button" class="btn-ai-suggest" id="ai-suggest-btn" title="Draft description with WatsonX AI" hidden>
-              <span class="ai-suggest-icon">✨</span>
-              <span class="ai-suggest-label">Suggest with AI</span>
-              <span class="ai-suggest-spinner" hidden></span>
-            </button>
-          </div>
+          <div class="form-group-label">
+              <label for="description">Description <span class="required">*</span></label>
+            </div>
           <textarea id="description" class="input-field" rows="3" maxlength="300"
             placeholder="Briefly describe the issue…" required></textarea>
           <span class="char-count" id="char-count">0 / 300</span>

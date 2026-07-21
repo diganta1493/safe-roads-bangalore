@@ -680,66 +680,6 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* ─── AI Description Assistant ─── */
-.description-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-.description-label-row label { margin-bottom: 0; }
-
-.btn-ai-suggest {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid #a78bfa;
-  background: #f5f3ff;
-  color: #6d28d9;
-  cursor: pointer;
-  transition: background .15s, box-shadow .15s;
-  white-space: nowrap;
-}
-.btn-ai-suggest:hover:not(:disabled) {
-  background: #ede9fe;
-  box-shadow: 0 0 0 3px rgba(139,92,246,.15);
-}
-.btn-ai-suggest:disabled {
-  opacity: .65;
-  cursor: not-allowed;
-}
-[data-theme="dark"] .btn-ai-suggest {
-  background: #2e1065;
-  border-color: #7c3aed;
-  color: #c4b5fd;
-}
-[data-theme="dark"] .btn-ai-suggest:hover:not(:disabled) {
-  background: #3b0764;
-}
-
-/* Spinner for AI button loading state */
-.ai-suggest-spinner {
-  display: inline-block;
-  width: 11px;
-  height: 11px;
-  border: 2px solid #c4b5fd;
-  border-top-color: #6d28d9;
-  border-radius: 50%;
-  animation: ai-spin .6s linear infinite;
-}
-@keyframes ai-spin { to { transform: rotate(360deg); } }
-
-/* Textarea typing animation when AI fills in text */
-#description.ai-filled {
-  border-color: #a78bfa;
-  box-shadow: 0 0 0 3px rgba(139,92,246,.12);
-  transition: border-color .3s, box-shadow .3s;
-}
-
 .empty-state {
   text-align: center;
   padding: 36px 20px;
