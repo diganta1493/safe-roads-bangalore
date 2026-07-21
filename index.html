@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RoadWatch Bangalore</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- MarkerClusterer for pin grouping -->
+  <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+  <!-- OpenAI config -->
+  <script src="openai-config.js"></script>
+  <!-- Firebase SDK (modular compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="site-header">
+    <!-- Tricolour accent bar -->
+    <div class="header-tricolour">
+      <span class="tri-saffron"></span>
+      <span class="tri-white"></span>
+      <span class="tri-green"></span>
+    </div>
+
+    <div class="header-inner">
+
+      <!-- LEFT — Branding -->
+      <div class="header-logo">
+        <img
+          src="logo.png"
+          alt="RoadWatch Bangalore Logo"
+          class="header-logo-img"
+          draggable="false"
+        />
+        <div class="header-brand-text">
+          <h1 class="site-title">RoadWatch Bangalore</h1>
+          <p class="site-subtitle">Community Road Issue Reporter</p>
+        </div>
+      </div>
+
+      <!-- CENTRE — Official National Emblem of India (Wikimedia SVG) -->
+      <div class="header-emblem" aria-label="National Emblem of India">
+        <img
+          src="emblem-india.svg"
+          alt="National Emblem of India — Satyameva Jayate"
+          class="emblem-img"
+          draggable="false"
+        />
+      </div>
+
+      <!-- RIGHT — Actions -->
+      <div class="header-meta">
+        <span id="report-count-badge" class="badge">0 Reports</span>
+        <button class="btn btn-outline" id="export-csv-btn" title="Export all reports as CSV">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+        <button class="btn btn-outline" id="toggle-panel-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Reports
+        </button>
+        <button class="btn btn-outline btn-icon" id="dark-mode-btn" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ── Stats Bar ── -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-chip chip-active" id="stat-pothole">
+      <span class="stat-icon">🕳️</span>
+      <span class="stat-label">Potholes</span>
+      <span class="stat-count" id="stat-count-pothole">0</span>
+    </div>
+    <div class="stat-chip" id="stat-broken-road">
+      <span class="stat-icon">🚧</span>
+      <span class="stat-label">Broken Road</span>
+      <span class="stat-count" id="stat-count-broken-road">0</span>
+    </div>
+    <div class="stat-chip" id="stat-open-manhole">
+      <span class="stat-icon">⚠️</span>
+      <span class="stat-label">Open Manhole</span>
+      <span class="stat-count" id="stat-count-open-manhole">0</span>
+    </div>
+    <div class="stat-chip" id="stat-unpaved-road">
+      <span class="stat-icon">🪨</span>
+      <span class="stat-label">Unpaved Road</span>
+      <span class="stat-count" id="stat-count-unpaved-road">0</span>
+    </div>
+    <div class="stat-chip" id="stat-bescom">
+      <span class="stat-icon">⚡</span>
+      <span class="stat-label">Open Pit (BESCOM)</span>
+      <span class="stat-count" id="stat-count-bescom">0</span>
+    </div>
+    <div class="stat-chip" id="stat-bwssb">
+      <span class="stat-icon">💧</span>
+      <span class="stat-label">Open Pit (BWSSB)</span>
+      <span class="stat-count" id="stat-count-bwssb">0</span>
+    </div>
+    <div class="stat-chip" id="stat-isp">
+      <span class="stat-icon">🌐</span>
+      <span class="stat-label">Open Pit (ISP)</span>
+      <span class="stat-count" id="stat-count-isp">0</span>
+    </div>
+    <div class="stat-chip" id="stat-garbage">
+      <span class="stat-icon">🗑️</span>
+      <span class="stat-label">Garbage Dump</span>
+      <span class="stat-count" id="stat-count-garbage">0</span>
+    </div>
+    <div class="stat-chip" id="stat-parking">
+      <span class="stat-icon">🚗</span>
+      <span class="stat-label">Illegal Parking</span>
+      <span class="stat-count" id="stat-count-parking">0</span>
+    </div>
+    <div class="stat-chip" id="stat-broken-footpath">
+      <span class="stat-icon">🦶</span>
+      <span class="stat-label">Broken Footpath</span>
+      <span class="stat-count" id="stat-count-broken-footpath">0</span>
+    </div>
+    <div class="stat-chip" id="stat-broken-culvert">
+      <span class="stat-icon">🌉</span>
+      <span class="stat-label">Broken Culvert</span>
+      <span class="stat-count" id="stat-count-broken-culvert">0</span>
+    </div>
+    <div class="stat-chip" id="stat-clogged-drain">
+      <span class="stat-icon">🌧️</span>
+      <span class="stat-label">Clogged Drain</span>
+      <span class="stat-count" id="stat-count-clogged-drain">0</span>
+    </div>
+    <div class="stat-chip" id="stat-footpath-enc">
+      <span class="stat-icon">🚷</span>
+      <span class="stat-label">Footpath Encroachment</span>
+      <span class="stat-count" id="stat-count-footpath-enc">0</span>
+    </div>
+    <div class="stat-chip" id="stat-hanging-wires">
+      <span class="stat-icon">⚡</span>
+      <span class="stat-label">Hanging Wires</span>
+      <span class="stat-count" id="stat-count-hanging-wires">0</span>
+    </div>
+    <!-- spacer to push total to the right -->
+    <div class="stats-spacer"></div>
+    <!-- G. Top locality chip -->
+    <div class="stat-chip" id="stat-top-locality-chip">
+      <span class="stat-icon">📍</span>
+      <span class="stat-label">Hotspot</span>
+      <span class="stat-count stat-locality" id="stat-top-locality">—</span>
+    </div>
+    <div class="stat-chip stat-total">
+      <span class="stat-icon">📋</span>
+      <span class="stat-label">Total Reports</span>
+      <span class="stat-count" id="stat-count-total">0</span>
+    </div>
+  </div>
+
+  <!-- ── Main Layout ── -->
+  <main class="layout">
+
+    <!-- Map -->
+    <div id="map-container">
+      <div id="map"></div>
+
+      <!-- ── Search Bar ── -->
+      <div class="map-search-wrap" id="map-search-wrap">
+        <div class="map-search-box">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            id="map-search-input"
+            class="map-search-input"
+            placeholder="Search roads, areas or paste lat, lng…"
+            autocomplete="off"
+            aria-label="Search location"
+          />
+          <button class="search-clear-btn" id="search-clear-btn" aria-label="Clear search" hidden>✕</button>
+        </div>
+      </div>
+
+      <div class="map-hint" id="map-hint">
+        📍 Click anywhere on the map to report a road issue
+      </div>
+      <!-- Geolocation button -->
+      <button class="btn-locate" id="locate-btn" title="Go to my location" aria-label="Go to my location">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+          <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" opacity=".2"/>
+        </svg>
+      </button>
+      <!-- Traffic layer toggle -->
+      <button class="btn-locate btn-traffic" id="traffic-btn" title="Toggle live traffic" aria-label="Toggle live traffic" aria-pressed="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="2" width="14" height="20" rx="3"/>
+          <circle cx="12" cy="7"  r="2" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="17" r="2" fill="currentColor" stroke="none"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bottom-sheet backdrop (mobile only) -->
+    <div class="sheet-backdrop" id="sheet-backdrop"></div>
+
+    <!-- Reports Side Panel / Bottom Sheet -->
+    <aside class="side-panel" id="side-panel">
+      <!-- Drag handle (visible on mobile) -->
+      <div class="sheet-handle-wrap" id="sheet-handle-wrap" aria-hidden="true">
+        <div class="sheet-handle"></div>
+      </div>
+      <div class="panel-header">
+        <h2>All Reports</h2>
+        <button class="btn btn-ghost" id="close-panel-btn">✕</button>
+      </div>
+      <div class="panel-filters">
+        <select id="sort-order" class="input-field">
+          <option value="newest">🕐 Newest First</option>
+          <option value="upvotes">▲ Most Confirmed</option>
+          <option value="severity">⚠️ Highest Severity</option>
+        </select>
+        <select id="filter-type" class="input-field">
+          <option value="">All Types</option>
+          <option value="Pothole">Pothole</option>
+          <option value="Broken Road">Broken Road</option>
+          <option value="Open Manhole">Open Manhole</option>
+          <option value="Unpaved Road">Unpaved Road</option>
+          <optgroup label="Open Pits">
+            <option value="Open Pit (BESCOM)">Open Pit by BESCOM</option>
+            <option value="Open Pit (BWSSB)">Open Pit by BWSSB</option>
+            <option value="Open Pit (ISP)">Open Pit by ISP Companies</option>
+          </optgroup>
+          <option value="Garbage Dump">Garbage Dump</option>
+          <option value="Illegal Parking">Illegal Parking</option>
+          <optgroup label="Footpath &amp; Drainage">
+            <option value="Broken Footpath">Broken Footpath</option>
+            <option value="Broken Culvert">Broken Culvert</option>
+            <option value="Clogged Storm Water Drain">Clogged Storm Water Drain</option>
+            <option value="Footpath Encroachment">Footpath Encroachment</option>
+          </optgroup>
+          <option value="Hanging Wires">Hanging Wires</option>
+        </select>
+        <select id="filter-status" class="input-field">
+          <option value="">All Statuses</option>
+          <option value="Open">Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+      </div>
+      <ul class="report-list" id="report-list">
+        <!-- Populated by JS -->
+      </ul>
+    </aside>
+
+  </main>
+
+  <!-- ── Report Form Modal ── -->
+  <div class="modal-overlay" id="report-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Report a Road Issue</h2>
+        <button class="btn btn-ghost" id="close-modal-btn" aria-label="Close">✕</button>
+      </div>
+      <form id="report-form" novalidate>
+        <div class="form-group">
+          <label for="issue-type">Issue Type <span class="required">*</span></label>
+          <select id="issue-type" class="input-field" required>
+            <option value="">— Select an issue —</option>
+            <optgroup label="Road Damage">
+              <option value="Pothole">Pothole</option>
+              <option value="Broken Road">Broken Road</option>
+              <option value="Unpaved Road">Unpaved Road</option>
+            </optgroup>
+            <optgroup label="Hazards">
+              <option value="Open Manhole">Open Manhole</option>
+              <option value="Open Pit (BESCOM)">Open Pit by BESCOM</option>
+              <option value="Open Pit (BWSSB)">Open Pit by BWSSB</option>
+              <option value="Open Pit (ISP)">Open Pit by ISP Companies</option>
+            </optgroup>
+            <optgroup label="Footpath &amp; Drainage">
+              <option value="Broken Footpath">Broken Footpath</option>
+              <option value="Broken Culvert">Broken Culvert</option>
+              <option value="Clogged Storm Water Drain">Clogged Storm Water Drain</option>
+              <option value="Footpath Encroachment">Footpath Encroachment</option>
+            </optgroup>
+            <optgroup label="Other Issues">
+              <option value="Garbage Dump">Garbage Dump</option>
+              <option value="Illegal Parking">Illegal Parking</option>
+              <option value="Hanging Wires">Hanging Wires</option>
+            </optgroup>
+          </select>
+          <span class="field-error" id="issue-type-error"></span>
+        </div>
+        <div class="form-group">
+          <label for="severity">Severity <span class="required">*</span></label>
+          <div class="severity-group" id="severity-group">
+            <label class="severity-option">
+              <input type="radio" name="severity" value="Low" />
+              <span class="severity-pill sev-low">Low</span>
+            </label>
+            <label class="severity-option">
+              <input type="radio" name="severity" value="Medium" />
+              <span class="severity-pill sev-medium">Medium</span>
+            </label>
+            <label class="severity-option">
+              <input type="radio" name="severity" value="High" />
+              <span class="severity-pill sev-high">High</span>
+            </label>
+          </div>
+          <span class="field-error" id="severity-error"></span>
+        </div>
+        <div class="form-group">
+          <div class="description-label-row">
+            <label for="description">Description <span class="required">*</span></label>
+            <button type="button" class="btn-ai-suggest" id="ai-suggest-btn" title="Draft description with WatsonX AI" hidden>
+              <span class="ai-suggest-icon">✨</span>
+              <span class="ai-suggest-label">Suggest with AI</span>
+              <span class="ai-suggest-spinner" hidden></span>
+            </button>
+          </div>
+          <textarea id="description" class="input-field" rows="3" maxlength="300"
+            placeholder="Briefly describe the issue…" required></textarea>
+          <span class="char-count" id="char-count">0 / 300</span>
+          <span class="field-error" id="description-error"></span>
+        </div>
+        <div class="form-group">
+          <label for="image-input">Photo (optional)</label>
+          <input type="file" id="image-input" class="input-field file-input" accept="image/*" />
+          <div class="image-preview-wrap" id="image-preview-wrap" hidden>
+            <img id="image-preview" src="" alt="Preview" />
+          </div>
+        </div>
+        <div class="form-group location-row">
+          <span class="location-label">📍 Location</span>
+          <span class="location-value" id="location-display">—</span>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Marker Detail Modal ── -->
+  <div class="modal-overlay" id="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+    <div class="modal modal-detail">
+      <div class="modal-header">
+        <h2 id="detail-modal-title">Issue Details</h2>
+        <button class="btn btn-ghost" id="close-detail-btn" aria-label="Close">✕</button>
+      </div>
+      <div id="detail-content" class="detail-content">
+        <!-- Populated by JS -->
+      </div>
+      <div class="detail-actions" id="detail-actions">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast ── -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+  <!-- C. Deep-link: open shared report after map loads -->
+  <script>
+    window.__DEEP_LINK_REPORT__ = new URLSearchParams(location.search).get('report');
+  </script>
+  <!-- Firebase initialised inside app.js after DOM is ready -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD6mVZ50vqSSF3FZTh4A2jSCLS68MzV3Es&map_ids=baba4dfa124e2b1ebb729832&libraries=marker,geocoding,places&callback=initMap"
+    async defer>
+  </script>
+
+</body>
+</html>

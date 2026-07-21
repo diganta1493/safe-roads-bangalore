@@ -1,0 +1,26 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "functions/**",
+      "openai-config.js",
+      "openai-config.TEMPLATE.js",
+      ".gitignore",
+      ".git/**",
+      ".vscode/**",
+      "node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/suggest",
+        "function": "openaiProxy"
+      }
+    ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20"
+  }
+}
