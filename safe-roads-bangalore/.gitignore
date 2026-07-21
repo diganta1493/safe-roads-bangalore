@@ -1,0 +1,10 @@
+# VS Code settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+
+# OpenAI credentials — never commit API keys
+openai-config.js
